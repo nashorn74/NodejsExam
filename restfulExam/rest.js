@@ -20,10 +20,32 @@ MongoClient.connect(url, function(err, db) {
   dbObj = db;
 });
 app.get('/user/message',function(req,res) {
-
+	console.log(req.query.sender_id);
+	var condition = {};
+	if (req.query.sender_id != undefined)
+		condition = {sender_id:req.query.sender_id};
+	var messages = dbObj.collection('messages');
+	messages.find(condition)
+		.toArray(function(err, results){
+		if (err) {
+			res.send(JSON.stringify(err));
+		} else {
+			res.send(JSON.stringify(results));
+		}
+	});
 });
+var ObjectID = require('mongodb').ObjectID;
 app.get('/user/message/:id',function(req,res) {
-
+	var messages = dbObj.collection('messages');
+	messages.findOne(
+		{_id:ObjectID.createFromHexString(req.params.id)},
+		function(err, result){
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				res.send(JSON.stringify(result));
+			}
+		});
 });
 app.post('/user/message',function(req,res) {
 	console.log(req.body.sender_id);
@@ -67,7 +89,16 @@ app.post('/user/message',function(req,res) {
 		});
 });
 app.delete('/user/message/:id',function(req,res) {
-
+	var messages = dbObj.collection('messages');
+	messages.remove(
+		{_id:ObjectID.createFromHexString(req.params.id)},
+		function(err, result){
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				res.send(JSON.stringify(result));
+			}
+		});
 });
 
 app.get('/user',function(req,res) {
