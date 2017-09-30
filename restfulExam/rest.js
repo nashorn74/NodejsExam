@@ -4,7 +4,6 @@ var app = express();
 app.use(bodyParser.urlencoded({extended:false}));
 
 var mysql = require('mysql');
-var mongodb = require('mongodb');
 var connection = mysql.createConnection({
   host     : 'localhost',
   user     : 'root',
@@ -12,6 +11,64 @@ var connection = mysql.createConnection({
   database : 'restful'
 }); 
 connection.connect();
+///////////////////////////////////
+var MongoClient = require('mongodb').MongoClient;
+var url = 'mongodb://localhost:27017/restful';
+var dbObj = null;
+MongoClient.connect(url, function(err, db) {
+  console.log("Connected correctly to server");
+  dbObj = db;
+});
+app.get('/user/message',function(req,res) {
+
+});
+app.get('/user/message/:id',function(req,res) {
+
+});
+app.post('/user/message',function(req,res) {
+	console.log(req.body.sender_id);
+	console.log(req.body.reciever_id);
+	console.log(req.body.message);
+	connection.query(
+		'select id,name from user where id=? or id=?',
+		[req.body.sender_id,req.body.reciever_id],
+		function(err, results, fields) {
+			if (err) {
+				res.send(JSON.stringify(err));
+			} else {
+				var sender = {};
+				var reciever = {};
+				for (var i = 0; i < results.length; i++){
+					if (results[i].id == 
+						Number(req.body.sender_id)) {
+						sender = results[i];
+					}
+					if (results[i].id ==
+						Number(req.body.reciever_id)) {
+						reciever = results[i];
+					}
+				}
+				var object = {
+					sender_id:req.body.sender_id,
+					reciever_id:req.body.reciever_id,
+					sender:sender, reciever:reciever,
+					message:req.body.message,
+					created_at:new Date()
+				}
+				var messages = dbObj.collection('messages');
+				messages.save(object, function(err, result){
+					if (err) {
+						res.send(JSON.stringify(err));
+					} else {
+						res.send(JSON.stringify(result));
+					}
+				});
+			}
+		});
+});
+app.delete('/user/message/:id',function(req,res) {
+
+});
 
 app.get('/user',function(req,res) {
 	connection.query('select * from user', 
