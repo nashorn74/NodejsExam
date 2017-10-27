@@ -174,6 +174,7 @@ app.post('/user',function(req,res){
 			}
 		})
 });
+var jwt = require('json-web-token');
 app.post('/user/login',function(req,res){
 	var password = req.body.password;
 	var hash = crypto.createHash('sha256').
@@ -185,7 +186,48 @@ app.post('/user/login',function(req,res){
 				res.send(JSON.stringify(err));
 			} else {
 				if (results.length > 0) {//조건만족 -> 로그인 성공
-					res.send(JSON.stringify({result:true}));
+					var cur_date = new Date();
+					var settingAddHeaders = {
+						payload: {
+							"iss":"shinhan",
+							"aud":"mobile",
+							"iat":cur_date.getTime(),
+							"typ":"/online/transactionstatus/v2",
+							"request":{
+								"myTransactionId":req.body.user_id,
+								"merchantTransactionId":hash,
+								"status":"SUCCESS"
+							}
+						},
+						header:{
+							kid:'abcdefghijklmnopqrstuvwxyz1234567890'
+						}
+					};
+					var secret = "SHINHANMOBILETOPSECRET!!!!!!!!";
+					//고유한 토큰 생성
+					jwt.encode(secret, settingAddHeaders, 
+						function(err, token) {
+							if (err) {
+								res.send(JSON.stringify(err));
+							} else {
+								var tokens = token.split(".");
+								connection.query(
+									'insert into user_login('+
+									'token,user_real_id) values(?,?)',
+									[tokens[2], results[0].id],
+									function(err, result) {
+										if (err) {
+											res.send(JSON.stringify(err));
+										} else {
+											res.send(JSON.stringify({
+												result:true,
+												token:tokens[2],
+												db_result:result
+											}));
+										}
+									});
+							}
+						});
 				} else {//조건불만족 -> 로그인 실패
 					res.send(JSON.stringify({result:false}));
 				}
