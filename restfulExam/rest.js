@@ -158,6 +158,18 @@ app.get('/user/:id',function(req,res){
 			}
 		});
 });
+app.post('/user/nologin',function(req,res){
+	connection.query(
+		'insert into user_nologin(device_token) values(?)',
+		[ req.body.device_token ], 
+		function(err, result) {
+			if (err) {
+				res.send(JSON.stringify({result:false,err:err}));
+			} else {
+				res.send(JSON.stringify({result:true,db_result:result}));
+			}
+		})
+});
 var crypto = require('crypto');
 app.post('/user',function(req,res){
 	var password = req.body.password;
