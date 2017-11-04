@@ -268,6 +268,52 @@ app.delete('/user/:id',function(req,res){
 			}
 		});
 });
+/*
+서버키
+AAAAR74VBVk:APA91bHof8sTERy8WcbsRV8CmzMs-rv_cAWC_vA_zR10QT65A5ECzrtPJOae743DMrBB2lN6pqoi2i8LRcOB265x7BqrvKmruCbmn450Rp5_iL-gaS-TyV9eqf-xu9mYRPesuaKKiUGr 
+이전 서버 키 :
+AIzaSyDaJ5e48oW6akCgf-ZnXKQgl7YkEe7sh68 
+웹 API 키:
+AIzaSyBqkCGNfnqGae1fV7mGWqC9_Rodvw7epxc 
+*/
+var FCM = require('fcm-node');
+var serverKey = 'AAAAR74VBVk:APA91bHof8sTERy8WcbsRV8CmzMs-rv_cAWC_vA_zR10QT65A5ECzrtPJOae743DMrBB2lN6pqoi2i8LRcOB265x7BqrvKmruCbmn450Rp5_iL-gaS-TyV9eqf-xu9mYRPesuaKKiUGr'; //put your server key here
+var fcm = new FCM(serverKey);
+app.post('/user/push/:id',function(req,res) {
+	connection.query(
+		'select device_token from user_nologin where id=?',
+		[ req.params.id ], 
+		function(err, results, fields) {
+			if (err) {
+				res.send(JSON.stringify({result:false,err:err}));
+			} else {
+				if (results.length > 0) {
+					var message = { //this may vary according to the message type (single recipient, multicast, topic, et cetera)
+				        to: results[0].device_token, 
+				        collapse_key: 'shinhan_collapse_key',
+				        notification: {
+				            title: 'PUSH NOTI TEST', 
+				            body: 'this is a body of your push notification' 
+				        },				        
+				        data: {  //you can send only notification or only data(or include both)
+				            data1: 'value1',
+				            data2: 'value2'
+				        }
+				    };
+				    fcm.send(message, function(err, response){
+				        if (err) {
+				            res.send(JSON.stringify({result:false,err:err}));
+				        } else {
+				        	res.send(JSON.stringify({result:true,response:response}));
+				        }
+				    });
+				} else {
+					res.send(JSON.stringify({result:false,err:'do not exist device token'}));
+				}
+			}
+		});	
+});
+
 app.listen(52273,function() {
 	console.log('Server running');
 });
